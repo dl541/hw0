@@ -106,8 +106,22 @@ def softmax_regression_epoch(X, y, theta, lr=0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    iterations = X.shape[0] // batch
+    kClasses = theta.shape[1]
+    for i in range(iterations):
+        miniX = X[i * batch : (i + 1) * batch]
+        miniY = y[i * batch : (i + 1) * batch]
+        expXTheta = np.exp(miniX @ theta)
+        Z = np.divide(expXTheta.T, np.sum(expXTheta, axis=1)).T
+        Iy = getOneHot(miniY, kClasses)
+        gradient = miniX.T @ (Z - Iy)
+        theta -= lr / batch * gradient
     ### END YOUR CODE
+
+
+def getOneHot(y, kClasses):
+    targets = y.reshape(-1)
+    return np.eye(kClasses)[targets]
 
 
 def nn_epoch(X, y, W1, W2, lr=0.1, batch=100):
