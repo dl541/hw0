@@ -112,7 +112,7 @@ def softmax_regression_epoch(X, y, theta, lr=0.1, batch=100):
         miniX = X[i * batch : (i + 1) * batch]
         miniY = y[i * batch : (i + 1) * batch]
         expXTheta = np.exp(miniX @ theta)
-        Z = np.divide(expXTheta.T, np.sum(expXTheta, axis=1)).T
+        Z = normalizeAcrossRow(expXTheta)
         Iy = getOneHot(miniY, kClasses)
         gradient = miniX.T @ (Z - Iy)
         theta -= lr / batch * gradient
@@ -147,8 +147,34 @@ def nn_epoch(X, y, W1, W2, lr=0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    iterations = X.shape[0] // batch
+    kClasses = W2.shape[1]
+
+    for i in range(iterations):
+        miniX = X[i * batch : (i + 1) * batch]
+        miniY = y[i * batch : (i + 1) * batch]
+        # forward pass
+        Z1 = np.maximum(miniX @ W1, 0)
+        Iy = getOneHot(miniY, kClasses)
+        # backward pass (second layer)
+        G2 = normalizeAcrossRow(np.exp(Z1 @ W2)) - Iy
+        W2Gradient = 1 / batch * (Z1.T @ G2)
+        # backward pass (first layer)
+        G1 = reluDerivative(Z1) * (G2 @ W2.T)
+        W1Gradient = 1 / batch * (miniX.T @ G1)
+
+        W1 -= lr * W1Gradient
+        W2 -= lr * W2Gradient
     ### END YOUR CODE
+
+
+def reluDerivative(X):
+    temp = np.where(X > 0, 1, X)
+    return np.where(temp <= 0, 0, temp)
+
+
+def normalizeAcrossRow(X):
+    return np.divide(X.T, np.sum(X, axis=1)).T
 
 
 ### CODE BELOW IS FOR ILLUSTRATION, YOU DO NOT NEED TO EDIT
